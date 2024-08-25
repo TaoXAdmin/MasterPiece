@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Écoute du Micro en Temps Réel</title>
+</head>
+<body>
+    <h1>Écoute du Micro en Temps Réel</h1>
+    <p id="result-text">Le texte capturé sera affiché ici...</p>
+    <p id="current-artist">Artiste sélectionné : </p>
+    <p id="current-work">Œuvre sélectionnée : </p>
+
+    <script>
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition;
+        let isListening = false;
+
+        const artistKeywords = {
+            "Freddy Mercury": ["chanteur"],
+            "Frank Sinatra": ["2 chanteurs", "deux chanteurs"],
+            "Leonardo Di Caprio": ["acteur"],
+            "Julia Roberts": ["actrice"],
+            "Pablo Picasso": ["Peintre"],
+            "Leonard de Vinci": ["2 peintres", "deux peintres"],
+            "Stephen King": ["Écrivain"],
+            "William Shakespeare": ["2 Écrivains", "deux écrivains"],
+            "Santiago Calatrava": ["Ingénieur"],
+            "Gustave Eiffel": ["2 Ingénieurs", "deux ingénieurs"]
+        };
+
+        const works = {
+            "Freddy Mercury": {
+                "1er": "https://fr.wikipedia.org/wiki/Bohemian_Rhapsody",
+                "2e": "https://fr.wikipedia.org/wiki/Don%27t_Stop_Me_Now",
+                "3e": "https://fr.wikipedia.org/wiki/We_Are_the_Champions",
+                "4e": "https://fr.wikipedia.org/wiki/Killer_Queen",
+                "5e": "https://fr.wikipedia.org/wiki/The_Show_Must_Go_On",
+                "premier": "https://fr.wikipedia.org/wiki/Bohemian_Rhapsody",
+                "deuxième": "https://fr.wikipedia.org/wiki/Don%27t_Stop_Me_Now",
+                "troisième": "https://fr.wikipedia.org/wiki/We_Are_the_Champions",
+                "quatrième": "https://fr.wikipedia.org/wiki/Killer_Queen",
+                "cinquième": "https://fr.wikipedia.org/wiki/The_Show_Must_Go_On"
+            },
+            "Frank Sinatra": {
+                "1er": "https://fr.wikipedia.org/wiki/Fly_Me_to_the_Moon",
+                "2e": "https://fr.wikipedia.org/wiki/New_York,_New_York_(chanson)",
+                "3e": "https://fr.wikipedia.org/wiki/Let_It_Snow!_Let_It_Snow!_Let_It_Snow!",
+                "4e": "https://fr.wikipedia.org/wiki/My_Way",
+                "5e": "https://fr.wikipedia.org/wiki/The_Girl_from_Ipanema",
+                "premier": "https://fr.wikipedia.org/wiki/Fly_Me_to_the_Moon",
+                "deuxième": "https://fr.wikipedia.org/wiki/New_York,_New_York_(chanson)",
+                "troisième": "https://fr.wikipedia.org/wiki/Let_It_Snow!_Let_It_Snow!_Let_It_Snow!",
+                "quatrième": "https://fr.wikipedia.org/wiki/My_Way",
+                "cinquième": "https://fr.wikipedia.org/wiki/The_Girl_from_Ipanema"
+            },
+            // Ajoutez les autres artistes et leurs œuvres ici avec les mots en toutes lettres
+            "Leonardo Di Caprio": {
+                "1er": "https://fr.wikipedia.org/wiki/Titanic_(film,_1997)",
+                "2e": "https://fr.wikipedia.org/wiki/Inception",
+                "3e": "https://fr.wikipedia.org/wiki/Shutter_Island",
+                "4e": "https://fr.wikipedia.org/wiki/Les_Infiltr%C3%A9s",
+                "5e": "https://fr.wikipedia.org/wiki/Le_Loup_de_Wall_Street",
+                "premier": "https://fr.wikipedia.org/wiki/Titanic_(film,_1997)",
+                "deuxième": "https://fr.wikipedia.org/wiki/Inception",
+                "troisième": "https://fr.wikipedia.org/wiki/Shutter_Island",
+                "quatrième": "https://fr.wikipedia.org/wiki/Les_Infiltr%C3%A9s",
+                "cinquième": "https://fr.wikipedia.org/wiki/Le_Loup_de_Wall_Street"
+            },
+            "Julia Roberts": {
+                "1er": "https://fr.wikipedia.org/wiki/Pretty_Woman",
+                "2e": "https://fr.wikipedia.org/wiki/Coup_de_foudre_%C3%A0_Notting_Hill",
+                "3e": "https://fr.wikipedia.org/wiki/Ocean%27s_Eleven",
+                "4e": "https://fr.wikipedia.org/wiki/Mange,_prie,_aime",
+                "5e": "https://fr.wikipedia.org/wiki/Erin_Brockovich,_seule_contre_tous",
+                "premier": "https://fr.wikipedia.org/wiki/Pretty_Woman",
+                "deuxième": "https://fr.wikipedia.org/wiki/Coup_de_foudre_%C3%A0_Notting_Hill",
+                "troisième": "https://fr.wikipedia.org/wiki/Ocean%27s_Eleven",
+                "quatrième": "https://fr.wikipedia.org/wiki/Mange,_prie,_aime",
+                "cinquième": "https://fr.wikipedia.org/wiki/Erin_Brockovich,_seule_contre_tous"
+            },
+            "Pablo Picasso": {
+                "1er": "https://fr.wikipedia.org/wiki/Les_Demoiselles_d%27Avignon",
+                "2e": "https://fr.wikipedia.org/wiki/Guernica_(Picasso)",
+                "3e": "https://fr.wikipedia.org/wiki/Le_R%C3%AAve_(Picasso)",
+                "4e": "https://fr.wikipedia.org/wiki/Gar%C3%A7on_%C3%A0_la_pipe",
+                "5e": "https://fr.wikipedia.org/wiki/Les_Trois_Danseuses",
+                "premier": "https://fr.wikipedia.org/wiki/Les_Demoiselles_d%27Avignon",
+                "deuxième": "https://fr.wikipedia.org/wiki/Guernica_(Picasso)",
+                "troisième": "https://fr.wikipedia.org/wiki/Le_R%C3%AAve_(Picasso)",
+                "quatrième": "https://fr.wikipedia.org/wiki/Gar%C3%A7on_%C3%A0_la_pipe",
+                "cinquième": "https://fr.wikipedia.org/wiki/Les_Trois_Danseuses"
+            },
+            "Leonard de Vinci": {
+                "1er": "https://fr.wikipedia.org/wiki/Mona_Lisa",
+                "2e": "https://fr.wikipedia.org/wiki/La_C%C3%A8ne",
+                "3e": "https://fr.wikipedia.org/wiki/Homme_de_Vitruve",
+                "4e": "https://fr.wikipedia.org/wiki/Salvator_Mundi",
+                "5e": "https://fr.wikipedia.org/wiki/Autoportrait_de_L%C3%A9onard_de_Vinci",
+                "premier": "https://fr.wikipedia.org/wiki/Mona_Lisa",
+                "deuxième": "https://fr.wikipedia.org/wiki/La_C%C3%A8ne",
+                "troisième": "https://fr.wikipedia.org/wiki/Homme_de_Vitruve",
+                "quatrième": "https://fr.wikipedia.org/wiki/Salvator_Mundi",
+                "cinquième": "https://fr.wikipedia.org/wiki/Autoportrait_de_L%C3%A9onard_de_Vinci"
+            },
+            "Stephen King": {
+                "1er": "https://fr.wikipedia.org/wiki/%C3%87a_(roman)",
+                "2e": "https://fr.wikipedia.org/wiki/Shining_(roman)",
+                "3e": "https://fr.wikipedia.org/wiki/La_Ligne_verte_(roman)",
+                "4e": "https://fr.wikipedia.org/wiki/1408_(nouvelle)",
+                "5e": "https://fr.wikipedia.org/wiki/Carrie_(roman)",
+                "premier": "https://fr.wikipedia.org/wiki/%C3%87a_(roman)",
+                "deuxième": "https://fr.wikipedia.org/wiki/Shining_(roman)",
+                "troisième": "https://fr.wikipedia.org/wiki/La_Ligne_verte_(roman)",
+                "quatrième": "https://fr.wikipedia.org/wiki/1408_(nouvelle)",
+                "cinquième": "https://fr.wikipedia.org/wiki/Carrie_(roman)"
+            },
+            "William Shakespeare": {
+                "1er": "https://fr.wikipedia.org/wiki/Rom%C3%A9o_et_Juliette",
+                "2e": "https://fr.wikipedia.org/wiki/Hamlet",
+                "3e": "https://fr.wikipedia.org/wiki/Othello",
+                "4e": "https://fr.wikipedia.org/wiki/Macbeth",
+                "5e": "https://fr.wikipedia.org/wiki/Le_Songe_d%27une_nuit_d%27%C3%A9t%C3%A9",
+                "premier": "https://fr.wikipedia.org/wiki/Rom%C3%A9o_et_Juliette",
+                "deuxième": "https://fr.wikipedia.org/wiki/Hamlet",
+                "troisième": "https://fr.wikipedia.org/wiki/Othello",
+                "quatrième": "https://fr.wikipedia.org/wiki/Macbeth",
+                "cinquième": "https://fr.wikipedia.org/wiki/Le_Songe_d%27une_nuit_d%27%C3%A9t%C3%A9"
+            },
+            "Santiago Calatrava": {
+                "1er": "https://fr.wikipedia.org/wiki/Pont_de_l%27Alamillo",
+                "2e": "https://fr.wikipedia.org/wiki/Galerie_BCE_Place",
+                "3e": "https://fr.wikipedia.org/wiki/Cit%C3%A9_des_arts_et_des_sciences",
+                "4e": "https://fr.wikipedia.org/wiki/Stade_olympique_d%27Ath%C3%A8nes",
+                "5e": "https://fr.wikipedia.org/wiki/Mus%C3%A9e_d%27Art_de_Milwaukee",
+                "premier": "https://fr.wikipedia.org/wiki/Pont_de_l%27Alamillo",
+                "deuxième": "https://fr.wikipedia.org/wiki/Galerie_BCE_Place",
+                "troisième": "https://fr.wikipedia.org/wiki/Cit%C3%A9_des_arts_et_des_sciences",
+                "quatrième": "https://fr.wikipedia.org/wiki/Stade_olympique_d%27Ath%C3%A8nes",
+                "cinquième": "https://fr.wikipedia.org/wiki/Mus%C3%A9e_d%27Art_de_Milwaukee"
+            },
+            "Gustave Eiffel": {
+                "1er": "https://fr.wikipedia.org/wiki/Statue_de_la_Libert%C3%A9",
+                "2e": "https://fr.wikipedia.org/wiki/Tour_Eiffel",
+                "3e": "https://fr.wikipedia.org/wiki/Passerelle_Saint-Jean",
+                "4e": "https://fr.wikipedia.org/wiki/Gare_de_Budapest",
+                "5e": "https://fr.wikipedia.org/wiki/Pont_Maria_Pia",
+                "premier": "https://fr.wikipedia.org/wiki/Statue_de_la_Libert%C3%A9",
+                "deuxième": "https://fr.wikipedia.org/wiki/Tour_Eiffel",
+                "troisième": "https://fr.wikipedia.org/wiki/Passerelle_Saint-Jean",
+                "quatrième": "https://fr.wikipedia.org/wiki/Gare_de_Budapest",
+                "cinquième": "https://fr.wikipedia.org/wiki/Pont_Maria_Pia"
+            }
+        };
+
+        let selectedArtist = "";
+        let selectedWorkUrl = "";
+
+        function startRecognition() {
+            if (!isListening) {
+                recognition.start();
+                isListening = true;
+                console.log('Reconnaissance vocale commencée.');
+            }
+        }
+
+        function stopRecognition() {
+            if (isListening) {
+                recognition.stop();
+                isListening = false;
+                console.log('Reconnaissance vocale arrêtée.');
+            }
+        }
+
+        function analyzeTranscript(transcript) {
+            // Détection de l'artiste
+            if (!selectedArtist) {
+                for (let artist in artistKeywords) {
+                    artistKeywords[artist].forEach(keyword => {
+                        if (transcript.includes(keyword)) {
+                            selectedArtist = artist;
+                            document.getElementById('current-artist').textContent = `Artiste sélectionné : ${artist}`;
+                        }
+                    });
+                }
+            }
+
+            // Détection de l'œuvre
+            if (selectedArtist && !selectedWorkUrl) {
+                for (let workPosition in works[selectedArtist]) {
+                    if (transcript.includes(workPosition)) {
+                        selectedWorkUrl = works[selectedArtist][workPosition];
+                        document.getElementById('current-work').textContent = `Œuvre sélectionnée : ${workPosition}`;
+                    }
+                }
+            }
+
+            // Redirection vers Wikipedia
+            if (selectedArtist && selectedWorkUrl) {
+                window.location.href = selectedWorkUrl;
+            }
+        }
+
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.lang = 'fr-FR';
+            recognition.continuous = true;
+            recognition.interimResults = true;
+
+            const resultText = document.getElementById('result-text');
+
+            recognition.onresult = (event) => {
+                let transcript = '';
+                for (let i = 0; i < event.results.length; i++) {
+                    transcript += event.results[i][0].transcript;
+                }
+                resultText.textContent = transcript;
+
+                analyzeTranscript(transcript.toLowerCase());
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Erreur de reconnaissance vocale :', event.error);
+                stopRecognition();
+                startRecognition();
+            };
+
+            recognition.onend = () => {
+                console.log('Reconnaissance vocale terminée.');
+                isListening = false;
+                startRecognition();
+            };
+
+            document.addEventListener('DOMContentLoaded', () => {
+                startRecognition();
+            });
+
+            window.addEventListener('focus', () => {
+                if (!isListening) {
+                    startRecognition();
+                }
+            });
+
+        } else {
+            alert("Votre navigateur ne supporte pas la reconnaissance vocale.");
+        }
+    </script>
+</body>
+</html>
