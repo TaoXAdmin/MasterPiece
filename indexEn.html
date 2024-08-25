@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MasterPiece</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #f5f5f7; color: #1d1d1f; height: 100vh; margin: 0 2rem; text-align: center; }
+        .container { animation: fadeIn 2s ease-in-out; width: 100%; max-width: 500px; }
+        .title { font-size: 3rem; font-weight: 600; margin-bottom: 1rem; }
+        .subtitle { font-size: 1.3rem; color: #6e6e73; margin-bottom: 2.5rem; }
+        .links { display: flex; flex-direction: column; gap: 1.5rem; }
+        .link { font-size: 1.2rem; font-weight: 500; color: #007aff; text-decoration: none; padding: 0.8rem 2rem; border: 2px solid #007aff; border-radius: 12px; transition: all 0.3s ease; touch-action: manipulation; }
+        .link:hover { background-color: #007aff; color: #ffffff; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <h1>Real-Time Microphone Listening</h1><br>
+    <p id="result-text">Captured text will be displayed here...</p><br>
+    <p id="current-artist">Selected Artist: </p><br>
+    <p id="current-work">Selected Work: </p><br>
+
+    <script>
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition;
+        let isListening = false;
+
+        const artistKeywords = {
+            "Freddy Mercury": ["singer"],
+            "Frank Sinatra": ["2 singers", "two singers"],
+            "Leonardo Di Caprio": ["actor"],
+            "Julia Roberts": ["actress"],
+            "Pablo Picasso": ["painter"],
+            "Leonardo da Vinci": ["2 painters", "two painters"],
+            "Stephen King": ["writer"],
+            "William Shakespeare": ["2 writers", "two writers"],
+            "Santiago Calatrava": ["engineer"],
+            "Gustave Eiffel": ["2 engineers", "two engineers"]
+        };
+
+        const works = {
+            "Freddy Mercury": {
+                "1st": "https://en.wikipedia.org/wiki/Bohemian_Rhapsody",
+                "2nd": "https://en.wikipedia.org/wiki/Don%27t_Stop_Me_Now",
+                "3rd": "https://en.wikipedia.org/wiki/We_Are_the_Champions",
+                "4th": "https://en.wikipedia.org/wiki/Killer_Queen",
+                "5th": "https://en.wikipedia.org/wiki/The_Show_Must_Go_On",
+                "first": "https://en.wikipedia.org/wiki/Bohemian_Rhapsody",
+                "second": "https://en.wikipedia.org/wiki/Don%27t_Stop_Me_Now",
+                "third": "https://en.wikipedia.org/wiki/We_Are_the_Champions",
+                "fourth": "https://en.wikipedia.org/wiki/Killer_Queen",
+                "fifth": "https://en.wikipedia.org/wiki/The_Show_Must_Go_On"
+            },
+            "Frank Sinatra": {
+                "1st": "https://en.wikipedia.org/wiki/Fly_Me_to_the_Moon",
+                "2nd": "https://en.wikipedia.org/wiki/New_York,_New_York_(song)",
+                "3rd": "https://en.wikipedia.org/wiki/Let_It_Snow!_Let_It_Snow!_Let_It_Snow!",
+                "4th": "https://en.wikipedia.org/wiki/My_Way",
+                "5th": "https://en.wikipedia.org/wiki/The_Girl_from_Ipanema",
+                "first": "https://en.wikipedia.org/wiki/Fly_Me_to_the_Moon",
+                "second": "https://en.wikipedia.org/wiki/New_York,_New_York_(song)",
+                "third": "https://en.wikipedia.org/wiki/Let_It_Snow!_Let_It_Snow!_Let_It_Snow!",
+                "fourth": "https://en.wikipedia.org/wiki/My_Way",
+                "fifth": "https://en.wikipedia.org/wiki/The_Girl_from_Ipanema"
+            },
+            // Add other artists and their works here with English words
+            "Leonardo Di Caprio": {
+                "1st": "https://en.wikipedia.org/wiki/Titanic_(1997_film)",
+                "2nd": "https://en.wikipedia.org/wiki/Inception",
+                "3rd": "https://en.wikipedia.org/wiki/Shutter_Island",
+                "4th": "https://en.wikipedia.org/wiki/The_Departed",
+                "5th": "https://en.wikipedia.org/wiki/The_Wolf_of_Wall_Street_(2013_film)",
+                "first": "https://en.wikipedia.org/wiki/Titanic_(1997_film)",
+                "second": "https://en.wikipedia.org/wiki/Inception",
+                "third": "https://en.wikipedia.org/wiki/Shutter_Island",
+                "fourth": "https://en.wikipedia.org/wiki/The_Departed",
+                "fifth": "https://en.wikipedia.org/wiki/The_Wolf_of_Wall_Street_(2013_film)"
+            },
+            "Julia Roberts": {
+                "1st": "https://en.wikipedia.org/wiki/Pretty_Woman",
+                "2nd": "https://en.wikipedia.org/wiki/Notting_Hill_(film)",
+                "3rd": "https://en.wikipedia.org/wiki/Ocean%27s_Eleven",
+                "4th": "https://en.wikipedia.org/wiki/Eat_Pray_Love",
+                "5th": "https://en.wikipedia.org/wiki/Erin_Brockovich_(film)",
+                "first": "https://en.wikipedia.org/wiki/Pretty_Woman",
+                "second": "https://en.wikipedia.org/wiki/Notting_Hill_(film)",
+                "third": "https://en.wikipedia.org/wiki/Ocean%27s_Eleven",
+                "fourth": "https://en.wikipedia.org/wiki/Eat_Pray_Love",
+                "fifth": "https://en.wikipedia.org/wiki/Erin_Brockovich_(film)"
+            },
+            "Pablo Picasso": {
+                "1st": "https://en.wikipedia.org/wiki/Les_Demoiselles_d%27Avignon",
+                "2nd": "https://en.wikipedia.org/wiki/Guernica_(Picasso)",
+                "3rd": "https://en.wikipedia.org/wiki/Le_R%C3%AAve_(Picasso)",
+                "4th": "https://en.wikipedia.org/wiki/Gar%C3%A7on_%C3%A0_la_pipe",
+                "5th": "https://en.wikipedia.org/wiki/Three_Dancers",
+                "first": "https://en.wikipedia.org/wiki/Les_Demoiselles_d%27Avignon",
+                "second": "https://en.wikipedia.org/wiki/Guernica_(Picasso)",
+                "third": "https://en.wikipedia.org/wiki/Le_R%C3%AAve_(Picasso)",
+                "fourth": "https://en.wikipedia.org/wiki/Gar%C3%A7on_%C3%A0_la_pipe",
+                "fifth": "https://en.wikipedia.org/wiki/Three_Dancers"
+            },
+            "Leonardo da Vinci": {
+                "1st": "https://en.wikipedia.org/wiki/Mona_Lisa",
+                "2nd": "https://en.wikipedia.org/wiki/The_Last_Supper_(Leonardo)",
+                "3rd": "https://en.wikipedia.org/wiki/Vitruvian_Man",
+                "4th": "https://en.wikipedia.org/wiki/Salvator_Mundi",
+                "5th": "https://en.wikipedia.org/wiki/Self-portrait_(Leonardo)",
+                "first": "https://en.wikipedia.org/wiki/Mona_Lisa",
+                "second": "https://en.wikipedia.org/wiki/The_Last_Supper_(Leonardo)",
+                "third": "https://en.wikipedia.org/wiki/Vitruvian_Man",
+                "fourth": "https://en.wikipedia.org/wiki/Salvator_Mundi",
+                "fifth": "https://en.wikipedia.org/wiki/Self-portrait_(Leonardo)"
+            },
+            "Stephen King": {
+                "1st": "https://en.wikipedia.org/wiki/It_(novel)",
+                "2nd": "https://en.wikipedia.org/wiki/The_Shining_(novel)",
+                "3rd": "https://en.wikipedia.org/wiki/The_Green_Mile_(novel)",
+                "4th": "https://en.wikipedia.org/wiki/1408_(short_story)",
+                "5th": "https://en.wikipedia.org/wiki/Carrie_(novel)",
+                "first": "https://en.wikipedia.org/wiki/It_(novel)",
+                "second": "https://en.wikipedia.org/wiki/The_Shining_(novel)",
+                "third": "https://en.wikipedia.org/wiki/The_Green_Mile_(novel)",
+                "fourth": "https://en.wikipedia.org/wiki/1408_(short_story)",
+                "fifth": "https://en.wikipedia.org/wiki/Carrie_(novel)"
+            },
+            "William Shakespeare": {
+                "1st": "https://en.wikipedia.org/wiki/Hamlet",
+                "2nd": "https://en.wikipedia.org/wiki/Macbeth",
+                "3rd": "https://en.wikipedia.org/wiki/Romeo_and_Juliet",
+                "4th": "https://en.wikipedia.org/wiki/Othello",
+                "5th": "https://en.wikipedia.org/wiki/King_Lear",
+                "first": "https://en.wikipedia.org/wiki/Hamlet",
+                "second": "https://en.wikipedia.org/wiki/Macbeth",
+                "third": "https://en.wikipedia.org/wiki/Romeo_and_Juliet",
+                "fourth": "https://en.wikipedia.org/wiki/Othello",
+                "fifth": "https://en.wikipedia.org/wiki/King_Lear"
+            },
+            "Santiago Calatrava": {
+                "1st": "https://en.wikipedia.org/wiki/Ciudad_de_las_Artes_y_las_Ciencias",
+                "2nd": "https://en.wikipedia.org/wiki/Lyon_Saint-Exup%C3%A9ry_Airport_station",
+                "3rd": "https://en.wikipedia.org/wiki/Milwaukee_Art_Museum",
+                "4th": "https://en.wikipedia.org/wiki/Auditorio_de_Tenerife",
+                "5th": "https://en.wikipedia.org/wiki/Margaret_Hunt_Hill_Bridge",
+                "first": "https://en.wikipedia.org/wiki/Ciudad_de_las_Artes_y_las_Ciencias",
+                "second": "https://en.wikipedia.org/wiki/Lyon_Saint-Exup%C3%A9ry_Airport_station",
+                "third": "https://en.wikipedia.org/wiki/Milwaukee_Art_Museum",
+                "fourth": "https://en.wikipedia.org/wiki/Auditorio_de_Tenerife",
+                "fifth": "https://en.wikipedia.org/wiki/Margaret_Hunt_Hill_Bridge"
+            },
+            "Gustave Eiffel": {
+                "1st": "https://en.wikipedia.org/wiki/Eiffel_Tower",
+                "2nd": "https://en.wikipedia.org/wiki/Statue_of_Liberty",
+                "3rd": "https://en.wikipedia.org/wiki/Garabit_viaduct",
+                "4th": "https://en.wikipedia.org/wiki/Porto_Cruz_Bridge",
+                "5th": "https://en.wikipedia.org/wiki/La_Rue_elevated_railway",
+                "first": "https://en.wikipedia.org/wiki/Eiffel_Tower",
+                "second": "https://en.wikipedia.org/wiki/Statue_of_Liberty",
+                "third": "https://en.wikipedia.org/wiki/Garabit_viaduct",
+                "fourth": "https://en.wikipedia.org/wiki/Porto_Cruz_Bridge",
+                "fifth": "https://en.wikipedia.org/wiki/La_Rue_elevated_railway"
+            }
+        };
+
+        function startRecognition() {
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'en-US';
+
+            recognition.onresult = function (event) {
+                const transcript = Array.from(event.results)
+                    .map(result => result[0])
+                    .map(result => result.transcript)
+                    .join('');
+                document.getElementById('result-text').textContent = transcript;
+
+                processTranscript(transcript);
+            };
+
+            recognition.start();
+            isListening = true;
+        }
+
+        function stopRecognition() {
+            if (recognition && isListening) {
+                recognition.stop();
+                isListening = false;
+            }
+        }
+
+        function processTranscript(transcript) {
+            let selectedArtist = '';
+            let selectedWork = '';
+
+            for (let artist in artistKeywords) {
+                for (let keyword of artistKeywords[artist]) {
+                    if (transcript.toLowerCase().includes(keyword.toLowerCase())) {
+                        selectedArtist = artist;
+                        break;
+                    }
+                }
+                if (selectedArtist) break;
+            }
+
+            if (selectedArtist) {
+                for (let work in works[selectedArtist]) {
+                    if (transcript.toLowerCase().includes(work.toLowerCase())) {
+                        selectedWork = works[selectedArtist][work];
+                        break;
+                    }
+                }
+            }
+
+            document.getElementById('current-artist').textContent = selectedArtist ? `Selected Artist: ${selectedArtist}` : "No artist selected";
+            document.getElementById('current-work').textContent = selectedWork ? `Selected Work: ${selectedWork}` : "No work selected";
+        }
+
+        startRecognition();
+    </script>
+</body>
+</html>
