@@ -3,24 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MasterPiece</title>
-        <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #f5f5f7; color: #1d1d1f; height: 100vh; margin: 0 2rem; text-align: center; }
-        .container { animation: fadeIn 2s ease-in-out; width: 100%; max-width: 500px; }
-        .title { font-size: 3rem; font-weight: 600; margin-bottom: 1rem; }
-        .subtitle { font-size: 1.3rem; color: #6e6e73; margin-bottom: 2.5rem; }
-        .links { display: flex; flex-direction: column; gap: 1.5rem; }
-        .link { font-size: 1.2rem; font-weight: 500; color: #007aff; text-decoration: none; padding: 0.8rem 2rem; border: 2px solid #007aff; border-radius: 12px; transition: all 0.3s ease; touch-action: manipulation; }
-        .link:hover { background-color: #007aff; color: #ffffff; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    </style>
+    <title>Écoute du Micro en Temps Réel</title>
 </head>
 <body>
-    <h1>Écoute du Micro en Temps Réel</h1><br>
-    <p id="result-text">Le texte capturé sera affiché ici...</p><br>
-    <p id="current-artist">Artiste sélectionné : </p><br>
-    <p id="current-work">Œuvre sélectionnée : </p><br>
+    <h1>Écoute du Micro en Temps Réel</h1>
+    <p id="result-text">Le texte capturé sera affiché ici...</p>
+    <p id="current-artist">Artiste sélectionné : </p>
+    <p id="current-work">Œuvre sélectionnée : </p>
 
     <script>
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -32,12 +21,12 @@
             "Frank Sinatra": ["2 chanteurs", "deux chanteurs"],
             "Leonardo Di Caprio": ["acteur"],
             "Julia Roberts": ["actrice"],
-            "Pablo Picasso": ["peintre"],
+            "Pablo Picasso": ["Peintre"],	
             "Leonard de Vinci": ["2 peintres", "deux peintres"],
-            "Stephen King": ["écrivain"],
-            "William Shakespeare": ["2 écrivains", "deux écrivains"],
-            "Santiago Calatrava": ["ingénieur"],
-            "Gustave Eiffel": ["2 ingénieurs", "deux ingénieurs"]
+            "Stephen King": ["Écrivain"],
+            "William Shakespeare": ["2 Écrivains", "deux écrivains"],
+            "Santiago Calatrava": ["Ingénieur"],
+            "Gustave Eiffel": ["2 Ingénieurs", "deux ingénieurs"]
         };
 
         const works = {
@@ -48,7 +37,6 @@
                 "4e": "https://fr.wikipedia.org/wiki/Killer_Queen",
                 "5e": "https://fr.wikipedia.org/wiki/The_Show_Must_Go_On",
                 "premier": "https://fr.wikipedia.org/wiki/Bohemian_Rhapsody",
-                "première": "https://fr.wikipedia.org/wiki/Bohemian_Rhapsody",
                 "deuxième": "https://fr.wikipedia.org/wiki/Don%27t_Stop_Me_Now",
                 "troisième": "https://fr.wikipedia.org/wiki/We_Are_the_Champions",
                 "quatrième": "https://fr.wikipedia.org/wiki/Killer_Queen",
@@ -57,13 +45,12 @@
             "Frank Sinatra": {
                 "1er": "https://fr.wikipedia.org/wiki/Fly_Me_to_the_Moon",
                 "2e": "https://fr.wikipedia.org/wiki/New_York,_New_York_(chanson)",
-                "3e": "https://fr.wikipedia.org/wiki/Let_It_Snow!_Let_It_Snow!_Let_It_Snow!",
+                "3e": "https://en.wikipedia.org/wiki/Let_It_Snow!_Let_It_Snow!_Let_It_Snow!",
                 "4e": "https://fr.wikipedia.org/wiki/My_Way",
                 "5e": "https://fr.wikipedia.org/wiki/The_Girl_from_Ipanema",
                 "premier": "https://fr.wikipedia.org/wiki/Fly_Me_to_the_Moon",
-                "première": "https://fr.wikipedia.org/wiki/Fly_Me_to_the_Moon",
                 "deuxième": "https://fr.wikipedia.org/wiki/New_York,_New_York_(chanson)",
-                "troisième": "https://fr.wikipedia.org/wiki/Let_It_Snow!_Let_It_Snow!_Let_It_Snow!",
+                "troisième": "https://en.wikipedia.org/wiki/Let_It_Snow!_Let_It_Snow!_Let_It_Snow!",
                 "quatrième": "https://fr.wikipedia.org/wiki/My_Way",
                 "cinquième": "https://fr.wikipedia.org/wiki/The_Girl_from_Ipanema"
             },
@@ -75,7 +62,6 @@
                 "4e": "https://fr.wikipedia.org/wiki/Les_Infiltr%C3%A9s",
                 "5e": "https://fr.wikipedia.org/wiki/Le_Loup_de_Wall_Street",
                 "premier": "https://fr.wikipedia.org/wiki/Titanic_(film,_1997)",
-                "première": "https://fr.wikipedia.org/wiki/Titanic_(film,_1997)",
                 "deuxième": "https://fr.wikipedia.org/wiki/Inception",
                 "troisième": "https://fr.wikipedia.org/wiki/Shutter_Island",
                 "quatrième": "https://fr.wikipedia.org/wiki/Les_Infiltr%C3%A9s",
@@ -88,7 +74,6 @@
                 "4e": "https://fr.wikipedia.org/wiki/Mange,_prie,_aime",
                 "5e": "https://fr.wikipedia.org/wiki/Erin_Brockovich,_seule_contre_tous",
                 "premier": "https://fr.wikipedia.org/wiki/Pretty_Woman",
-                "première": "https://fr.wikipedia.org/wiki/Pretty_Woman",
                 "deuxième": "https://fr.wikipedia.org/wiki/Coup_de_foudre_%C3%A0_Notting_Hill",
                 "troisième": "https://fr.wikipedia.org/wiki/Ocean%27s_Eleven",
                 "quatrième": "https://fr.wikipedia.org/wiki/Mange,_prie,_aime",
@@ -101,7 +86,6 @@
                 "4e": "https://fr.wikipedia.org/wiki/Gar%C3%A7on_%C3%A0_la_pipe",
                 "5e": "https://fr.wikipedia.org/wiki/Les_Trois_Danseuses",
                 "premier": "https://fr.wikipedia.org/wiki/Les_Demoiselles_d%27Avignon",
-                "première": "https://fr.wikipedia.org/wiki/Les_Demoiselles_d%27Avignon",
                 "deuxième": "https://fr.wikipedia.org/wiki/Guernica_(Picasso)",
                 "troisième": "https://fr.wikipedia.org/wiki/Le_R%C3%AAve_(Picasso)",
                 "quatrième": "https://fr.wikipedia.org/wiki/Gar%C3%A7on_%C3%A0_la_pipe",
@@ -114,7 +98,6 @@
                 "4e": "https://fr.wikipedia.org/wiki/Salvator_Mundi",
                 "5e": "https://fr.wikipedia.org/wiki/Autoportrait_de_L%C3%A9onard_de_Vinci",
                 "premier": "https://fr.wikipedia.org/wiki/Mona_Lisa",
-                "première": "https://fr.wikipedia.org/wiki/Mona_Lisa",
                 "deuxième": "https://fr.wikipedia.org/wiki/La_C%C3%A8ne",
                 "troisième": "https://fr.wikipedia.org/wiki/Homme_de_Vitruve",
                 "quatrième": "https://fr.wikipedia.org/wiki/Salvator_Mundi",
@@ -127,7 +110,6 @@
                 "4e": "https://fr.wikipedia.org/wiki/1408_(nouvelle)",
                 "5e": "https://fr.wikipedia.org/wiki/Carrie_(roman)",
                 "premier": "https://fr.wikipedia.org/wiki/%C3%87a_(roman)",
-                "première": "https://fr.wikipedia.org/wiki/%C3%87a_(roman)",
                 "deuxième": "https://fr.wikipedia.org/wiki/Shining_(roman)",
                 "troisième": "https://fr.wikipedia.org/wiki/La_Ligne_verte_(roman)",
                 "quatrième": "https://fr.wikipedia.org/wiki/1408_(nouvelle)",
@@ -140,7 +122,6 @@
                 "4e": "https://fr.wikipedia.org/wiki/Macbeth",
                 "5e": "https://fr.wikipedia.org/wiki/Le_Songe_d%27une_nuit_d%27%C3%A9t%C3%A9",
                 "premier": "https://fr.wikipedia.org/wiki/Rom%C3%A9o_et_Juliette",
-                "première": "https://fr.wikipedia.org/wiki/Rom%C3%A9o_et_Juliette",
                 "deuxième": "https://fr.wikipedia.org/wiki/Hamlet",
                 "troisième": "https://fr.wikipedia.org/wiki/Othello",
                 "quatrième": "https://fr.wikipedia.org/wiki/Macbeth",
@@ -148,28 +129,26 @@
             },
             "Santiago Calatrava": {
                 "1er": "https://fr.wikipedia.org/wiki/Pont_de_l%27Alamillo",
-                "2e": "https://fr.wikipedia.org/wiki/Galerie_BCE_Place",
+                "2e": "https://fr.wikipedia.org/wiki/Place_Brookfield",
                 "3e": "https://fr.wikipedia.org/wiki/Cit%C3%A9_des_arts_et_des_sciences",
                 "4e": "https://fr.wikipedia.org/wiki/Stade_olympique_d%27Ath%C3%A8nes",
-                "5e": "https://fr.wikipedia.org/wiki/Mus%C3%A9e_d%27Art_de_Milwaukee",
+                "5e": "https://fr.wikipedia.org/wiki/Milwaukee_Art_Museum",
                 "premier": "https://fr.wikipedia.org/wiki/Pont_de_l%27Alamillo",
-                "première": "https://fr.wikipedia.org/wiki/Pont_de_l%27Alamillo",
-                "deuxième": "https://fr.wikipedia.org/wiki/Galerie_BCE_Place",
+                "deuxième": "https://fr.wikipedia.org/wiki/Place_Brookfield",
                 "troisième": "https://fr.wikipedia.org/wiki/Cit%C3%A9_des_arts_et_des_sciences",
                 "quatrième": "https://fr.wikipedia.org/wiki/Stade_olympique_d%27Ath%C3%A8nes",
-                "cinquième": "https://fr.wikipedia.org/wiki/Mus%C3%A9e_d%27Art_de_Milwaukee"
+                "cinquième": "https://fr.wikipedia.org/wiki/Milwaukee_Art_Museum"
             },
             "Gustave Eiffel": {
                 "1er": "https://fr.wikipedia.org/wiki/Statue_de_la_Libert%C3%A9",
                 "2e": "https://fr.wikipedia.org/wiki/Tour_Eiffel",
                 "3e": "https://fr.wikipedia.org/wiki/Passerelle_Saint-Jean",
-                "4e": "https://fr.wikipedia.org/wiki/Gare_de_Budapest",
+                "4e": "https://fr.wikipedia.org/wiki/Gare_de_Budapest-Nyugati",
                 "5e": "https://fr.wikipedia.org/wiki/Pont_Maria_Pia",
                 "premier": "https://fr.wikipedia.org/wiki/Statue_de_la_Libert%C3%A9",
-                "première": "https://fr.wikipedia.org/wiki/Statue_de_la_Libert%C3%A9",
                 "deuxième": "https://fr.wikipedia.org/wiki/Tour_Eiffel",
                 "troisième": "https://fr.wikipedia.org/wiki/Passerelle_Saint-Jean",
-                "quatrième": "https://fr.wikipedia.org/wiki/Gare_de_Budapest",
+                "quatrième": "https://fr.wikipedia.org/wiki/Gare_de_Budapest-Nyugati",
                 "cinquième": "https://fr.wikipedia.org/wiki/Pont_Maria_Pia"
             }
         };
