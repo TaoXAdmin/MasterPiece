@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MasterPiece</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #f5f5f7; color: #1d1d1f; height: 100vh; margin: 0 2rem; text-align: center; }
+        .container { animation: fadeIn 2s ease-in-out; width: 100%; max-width: 500px; }
+        .title { font-size: 3rem; font-weight: 600; margin-bottom: 1rem; }
+        .subtitle { font-size: 1.3rem; color: #6e6e73; margin-bottom: 2.5rem; }
+        .links { display: flex; flex-direction: column; gap: 1.5rem; }
+        .link { font-size: 1.2rem; font-weight: 500; color: #007aff; text-decoration: none; padding: 0.8rem 2rem; border: 2px solid #007aff; border-radius: 12px; transition: all 0.3s ease; touch-action: manipulation; }
+        .link:hover { background-color: #007aff; color: #ffffff; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <h1>Escucha de Micrófono en Tiempo Real</h1><br>
+    <p id="result-text">El texto capturado se mostrará aquí...</p><br>
+    <p id="current-artist">Artista Seleccionado: </p><br>
+    <p id="current-work">Obra Seleccionada: </p><br>
+
+    <script>
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition;
+        let isListening = false;
+
+        const artistKeywords = {
+            "Freddy Mercury": ["cantante"],
+            "Frank Sinatra": ["2 cantantes", "dos cantantes"],
+            "Leonardo Di Caprio": ["actor"],
+            "Julia Roberts": ["actriz"],
+            "Pablo Picasso": ["pintor"],
+            "Leonardo da Vinci": ["2 pintores", "dos pintores"],
+            "Stephen King": ["escritor"],
+            "William Shakespeare": ["2 escritores", "dos escritores"],
+            "Santiago Calatrava": ["ingeniero"],
+            "Gustave Eiffel": ["2 ingenieros", "dos ingenieros"]
+        };
+
+        const works = {
+            "Freddy Mercury": {
+                "1st": "https://es.wikipedia.org/wiki/Bohemian_Rhapsody",
+                "2nd": "https://es.wikipedia.org/wiki/Don%27t_Stop_Me_Now",
+                "3rd": "https://es.wikipedia.org/wiki/We_Are_the_Champions",
+                "4th": "https://es.wikipedia.org/wiki/Killer_Queen",
+                "5th": "https://es.wikipedia.org/wiki/The_Show_Must_Go_On_(canci%C3%B3n_de_Queen)",
+                "first": "https://es.wikipedia.org/wiki/Bohemian_Rhapsody",
+                "second": "https://es.wikipedia.org/wiki/Don%27t_Stop_Me_Now",
+                "third": "https://es.wikipedia.org/wiki/We_Are_the_Champions",
+                "fourth": "https://es.wikipedia.org/wiki/Killer_Queen",
+                "fifth": "https://es.wikipedia.org/wiki/The_Show_Must_Go_On_(canci%C3%B3n_de_Queen)"
+            },
+            "Frank Sinatra": {
+                "1st": "https://es.wikipedia.org/wiki/Fly_Me_to_the_Moon",
+                "2nd": "https://es.wikipedia.org/wiki/New_York,_New_York_(canción)",
+                "3rd": "https://en.wikipedia.org/wiki/Let_It_Snow!_Let_It_Snow!_Let_It_Snow!",
+                "4th": "https://es.wikipedia.org/wiki/My_Way_(Comme_d%27habitude)",
+                "5th": "https://es.wikipedia.org/wiki/Garota_de_Ipanema",
+                "first": "https://es.wikipedia.org/wiki/Fly_Me_to_the_Moon",
+                "second": "https://es.wikipedia.org/wiki/New_York,_New_York_(canción)",
+                "third": "https://en.wikipedia.org/wiki/Let_It_Snow!_Let_It_Snow!_Let_It_Snow!",
+                "fourth": "https://es.wikipedia.org/wiki/My_Way_(Comme_d%27habitude)",
+                "fifth": "https://es.wikipedia.org/wiki/Garota_de_Ipanema"
+            },
+            // Agrega otros artistas y sus obras aquí con palabras en español
+            "Leonardo Di Caprio": {
+                "1st": "https://es.wikipedia.org/wiki/Titanic_(película_de_1997)",
+                "2nd": "https://es.wikipedia.org/wiki/Origen_(película)",
+                "3rd": "https://es.wikipedia.org/wiki/La_isla_siniestra",
+                "4th": "https://es.wikipedia.org/wiki/The_Departed",
+                "5th": "https://es.wikipedia.org/wiki/El_lobo_de_Wall_Street",
+                "first": "https://es.wikipedia.org/wiki/Titanic_(película_de_1997)",
+                "second": "https://es.wikipedia.org/wiki/Origen_(película)",
+                "third": "https://es.wikipedia.org/wiki/La_isla_siniestra",
+                "fourth": "https://es.wikipedia.org/wiki/The_Departed",
+                "fifth": "https://es.wikipedia.org/wiki/El_lobo_de_Wall_Street"
+            },
+            "Julia Roberts": {
+                "1st": "https://es.wikipedia.org/wiki/Mujer_bonita",
+                "2nd": "https://es.wikipedia.org/wiki/Notting_Hill_(pel%C3%ADcula)",
+                "3rd": "https://es.wikipedia.org/wiki/Ocean%27s_Eleven_(pel%C3%ADcula_de_2001)",
+                "4th": "https://es.wikipedia.org/wiki/Come,_reza,_ama",
+                "5th": "https://es.wikipedia.org/wiki/Erin_Brockovich_(pel%C3%ADcula)",
+                "first": "https://es.wikipedia.org/wiki/Mujer_bonita",
+                "second": "https://es.wikipedia.org/wiki/Notting_Hill_(pel%C3%ADcula)",
+                "third": "https://es.wikipedia.org/wiki/Ocean%27s_Eleven_(pel%C3%ADcula_de_2001)",
+                "fourth": "https://es.wikipedia.org/wiki/Come,_reza,_ama",
+                "fifth": "https://es.wikipedia.org/wiki/Erin_Brockovich_(pel%C3%ADcula)"
+            },
+            "Pablo Picasso": {
+                "1st": "https://es.wikipedia.org/wiki/Las_señoritas_de_Avignon",
+                "2nd": "https://es.wikipedia.org/wiki/Guernica_(cuadro)",
+                "3rd": "https://es.wikipedia.org/wiki/El_sueño_(Picasso)",
+                "4th": "https://es.wikipedia.org/wiki/Garçon_à_la_pipe",
+                "5th": "https://es.wikipedia.org/wiki/La_danza",
+                "first": "https://es.wikipedia.org/wiki/Las_señoritas_de_Avignon",
+                "second": "https://es.wikipedia.org/wiki/Guernica_(cuadro)",
+                "third": "https://es.wikipedia.org/wiki/El_sueño_(Picasso)",
+                "fourth": "https://es.wikipedia.org/wiki/Garçon_à_la_pipe",
+                "fifth": "https://es.wikipedia.org/wiki/La_danza"
+            },
+            "Leonardo da Vinci": {
+                "1st": "https://es.wikipedia.org/wiki/Mona_Lisa",
+                "2nd": "https://es.wikipedia.org/wiki/La_Última_Cena_(Leonardo)",
+                "3rd": "https://es.wikipedia.org/wiki/Hombre_de_Vitruvio",
+                "4th": "https://es.wikipedia.org/wiki/Salvator_Mundi_(Leonardo_da_Vinci)",
+                "5th": "https://es.wikipedia.org/wiki/Autorretrato_(Leonardo)",
+                "first": "https://es.wikipedia.org/wiki/Mona_Lisa",
+                "second": "https://es.wikipedia.org/wiki/La_Última_Cena_(Leonardo)",
+                "third": "https://es.wikipedia.org/wiki/Hombre_de_Vitruvio",
+                "fourth": "https://es.wikipedia.org/wiki/Salvator_Mundi_(Leonardo_da_Vinci)",
+                "fifth": "https://es.wikipedia.org/wiki/Autorretrato_(Leonardo)"
+            },
+            "Stephen King": {
+                "1st": "https://es.wikipedia.org/wiki/It_(novela)",
+                "2nd": "https://es.wikipedia.org/wiki/El_resplandor_(novela)",
+                "3rd": "https://es.wikipedia.org/wiki/La_milla_verde_(novela)",
+                "4th": "https://es.wikipedia.org/wiki/1408_(relato_corto)",
+                "5th": "https://es.wikipedia.org/wiki/Carrie_(novela)",
+                "first": "https://es.wikipedia.org/wiki/It_(novela)",
+                "second": "https://es.wikipedia.org/wiki/El_resplandor_(novela)",
+                "third": "https://es.wikipedia.org/wiki/La_milla_verde_(novela)",
+                "fourth": "https://es.wikipedia.org/wiki/1408_(relato_corto)",
+                "fifth": "https://es.wikipedia.org/wiki/Carrie_(novela)"
+            },
+            "William Shakespeare": {
+                "1st": "https://es.wikipedia.org/wiki/Romeo_y_Julieta",
+                "2nd": "https://es.wikipedia.org/wiki/Hamlet",
+				"3rd": "https://es.wikipedia.org/wiki/Otelo",
+                "4th": "https://es.wikipedia.org/wiki/Macbeth",               
+                "5th": "https://es.wikipedia.org/wiki/El_sueño_de_una_noche_de_verano",
+                "first": "https://es.wikipedia.org/wiki/Romeo_y_Julieta",
+                "second": "https://es.wikipedia.org/wiki/Hamlet",
+                "third": "https://es.wikipedia.org/wiki/Otelo",
+                "fourth": "https://es.wikipedia.org/wiki/Macbeth",
+                "fifth": "https://es.wikipedia.org/wiki/El_sueño_de_una_noche_de_verano"
+            },
+            "Santiago Calatrava": {
+                "1st": "https://es.wikipedia.org/wiki/Puente_del_Alamillo_(Sevilla)",
+                "2nd": "https://es.wikipedia.org/wiki/Brookfield_Place",
+                "3rd": "https://es.wikipedia.org/wiki/Ciudad_de_las_Artes_y_las_Ciencias",
+                "4th": "https://es.wikipedia.org/wiki/Estadio_Ol%C3%ADmpico_de_Atenas",
+                "5th": "https://es.wikipedia.org/wiki/Museo_de_Arte_de_Milwaukee",
+                "first": "https://es.wikipedia.org/wiki/Puente_del_Alamillo_(Sevilla)",
+                "second": "https://es.wikipedia.org/wiki/Brookfield_Place",
+                "third": "https://es.wikipedia.org/wiki/Ciudad_de_las_Artes_y_las_Ciencias",
+                "fourth": "https://es.wikipedia.org/wiki/Estadio_Ol%C3%ADmpico_de_Atenas",
+                "fifth": "https://es.wikipedia.org/wiki/Museo_de_Arte_de_Milwaukee"
+            },
+            "Gustave Eiffel": {
+                "1st": "https://es.wikipedia.org/wiki/Estatua_de_la_Libertad",
+                "2nd": "https://es.wikipedia.org/wiki/Torre_Eiffel",
+                "3rd": "https://es.wikipedia.org/wiki/Pasarela_Eiffel",
+                "4th": "https://es.wikipedia.org/wiki/Estaci%C3%B3n_Budapest-Nyugati",
+                "5th": "https://es.wikipedia.org/wiki/Puente_Mar%C3%ADa_P%C3%ADa",
+                "first": "https://es.wikipedia.org/wiki/Estatua_de_la_Libertad",
+                "second": "https://es.wikipedia.org/wiki/Torre_Eiffel",
+                "third": "https://es.wikipedia.org/wiki/Pasarela_Eiffel",
+                "fourth": "https://es.wikipedia.org/wiki/Estaci%C3%B3n_Budapest-Nyugati",
+                "fifth": "https://es.wikipedia.org/wiki/Puente_Mar%C3%ADa_P%C3%ADa"
+            }
+        };
+
+     let selectedArtist = "";
+        let selectedWorkUrl = "";
+
+        function startRecognition() {
+            if (!isListening) {
+                recognition.start();
+                isListening = true;
+                console.log('Reconnaissance vocale commencée.');
+            }
+        }
+
+        function stopRecognition() {
+            if (isListening) {
+                recognition.stop();
+                isListening = false;
+                console.log('Reconnaissance vocale arrêtée.');
+            }
+        }
+
+        function analyzeTranscript(transcript) {
+            // Détection de l'artiste
+            if (!selectedArtist) {
+                for (let artist in artistKeywords) {
+                    artistKeywords[artist].forEach(keyword => {
+                        if (transcript.includes(keyword)) {
+                            selectedArtist = artist;
+                            document.getElementById('current-artist').textContent = `Artista Seleccionado : ${artist}`;
+                        }
+                    });
+                }
+            }
+
+            // Détection de l'œuvre
+            if (selectedArtist && !selectedWorkUrl) {
+                for (let workPosition in works[selectedArtist]) {
+                    if (transcript.includes(workPosition)) {
+                        selectedWorkUrl = works[selectedArtist][workPosition];
+                        document.getElementById('current-work').textContent = `Obra Seleccionada : ${workPosition}`;
+                    }
+                }
+            }
+
+            // Redirection vers Wikipedia
+            if (selectedArtist && selectedWorkUrl) {
+                window.location.href = selectedWorkUrl;
+            }
+        }
+
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.lang = 'es-ES';
+            recognition.continuous = true;
+            recognition.interimResults = true;
+
+            const resultText = document.getElementById('result-text');
+
+            recognition.onresult = (event) => {
+                let transcript = '';
+                for (let i = 0; i < event.results.length; i++) {
+                    transcript += event.results[i][0].transcript;
+                }
+                resultText.textContent = transcript;
+
+                analyzeTranscript(transcript.toLowerCase());
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Erreur de reconnaissance vocale :', event.error);
+                stopRecognition();
+                startRecognition();
+            };
+
+            recognition.onend = () => {
+                console.log('Reconnaissance vocale terminée.');
+                isListening = false;
+                startRecognition();
+            };
+
+            document.addEventListener('DOMContentLoaded', () => {
+                startRecognition();
+            });
+
+            window.addEventListener('focus', () => {
+                if (!isListening) {
+                    startRecognition();
+                }
+            });
+
+        } else {
+            alert("Votre navigateur ne supporte pas la reconnaissance vocale.");
+        }
+    </script>
+</body>
+</html>
