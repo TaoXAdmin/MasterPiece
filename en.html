@@ -164,61 +164,97 @@
             }
         };
 
+             let selectedArtist = "";
+        let selectedWorkUrl = "";
+
         function startRecognition() {
-            recognition = new SpeechRecognition();
-            recognition.continuous = true;
-            recognition.interimResults = true;
-            recognition.lang = 'en-US';
-
-            recognition.onresult = function (event) {
-                const transcript = Array.from(event.results)
-                    .map(result => result[0])
-                    .map(result => result.transcript)
-                    .join('');
-                document.getElementById('result-text').textContent = transcript;
-
-                processTranscript(transcript);
-            };
-
-            recognition.start();
-            isListening = true;
+            if (!isListening) {
+                recognition.start();
+                isListening = true;
+                console.log('Reconnaissance vocale commencée.');
+            }
         }
 
         function stopRecognition() {
-            if (recognition && isListening) {
+            if (isListening) {
                 recognition.stop();
                 isListening = false;
+                console.log('Reconnaissance vocale arrêtée.');
             }
         }
 
-        function processTranscript(transcript) {
-            let selectedArtist = '';
-            let selectedWork = '';
-
-            for (let artist in artistKeywords) {
-                for (let keyword of artistKeywords[artist]) {
-                    if (transcript.toLowerCase().includes(keyword.toLowerCase())) {
-                        selectedArtist = artist;
-                        break;
-                    }
-                }
-                if (selectedArtist) break;
-            }
-
-            if (selectedArtist) {
-                for (let work in works[selectedArtist]) {
-                    if (transcript.toLowerCase().includes(work.toLowerCase())) {
-                        selectedWork = works[selectedArtist][work];
-                        break;
-                    }
+        function analyzeTranscript(transcript) {
+            // Détection de l'artiste
+            if (!selectedArtist) {
+                for (let artist in artistKeywords) {
+                    artistKeywords[artist].forEach(keyword => {
+                        if (transcript.includes(keyword)) {
+                            selectedArtist = artist;
+                            document.getElementById('current-artist').textContent = `Selected Artist: ${artist}`;
+                        }
+                    });
                 }
             }
 
-            document.getElementById('current-artist').textContent = selectedArtist ? `Selected Artist: ${selectedArtist}` : "No artist selected";
-            document.getElementById('current-work').textContent = selectedWork ? `Selected Work: ${selectedWork}` : "No work selected";
+            // Détection de l'œuvre
+            if (selectedArtist && !selectedWorkUrl) {
+                for (let workPosition in works[selectedArtist]) {
+                    if (transcript.includes(workPosition)) {
+                        selectedWorkUrl = works[selectedArtist][workPosition];
+                        document.getElementById('current-work').textContent = `Selected Oeuvre: ${workPosition}`;
+                    }
+                }
+            }
+
+            // Redirection vers Wikipedia
+            if (selectedArtist && selectedWorkUrl) {
+                window.location.href = selectedWorkUrl;
+            }
         }
 
-        startRecognition();
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.lang = 'en-US';
+            recognition.continuous = true;
+            recognition.interimResults = true;
+
+            const resultText = document.getElementById('result-text');
+
+            recognition.onresult = (event) => {
+                let transcript = '';
+                for (let i = 0; i < event.results.length; i++) {
+                    transcript += event.results[i][0].transcript;
+                }
+                resultText.textContent = transcript;
+
+                analyzeTranscript(transcript.toLowerCase());
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Erreur de reconnaissance vocale :', event.error);
+                stopRecognition();
+                startRecognition();
+            };
+
+            recognition.onend = () => {
+                console.log('Reconnaissance vocale terminée.');
+                isListening = false;
+                startRecognition();
+            };
+
+            document.addEventListener('DOMContentLoaded', () => {
+                startRecognition();
+            });
+
+            window.addEventListener('focus', () => {
+                if (!isListening) {
+                    startRecognition();
+                }
+            });
+
+        } else {
+            alert("Votre navigateur ne supporte pas la reconnaissance vocale.");
+        }
     </script>
 </body>
 </html>
